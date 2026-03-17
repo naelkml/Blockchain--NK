@@ -13,23 +13,10 @@ body {
   min-height: 100vh;
 }
 
-:root {
-  --mint:         #17ebbd;
-  --mint-glow:    rgba(23, 235, 189, 0.25);
-  --mint-dim:     rgba(23, 235, 189, 0.1);
-  --orange:       #ed622c;
-  --gold:         #efba32;
-  --teal:         #02988e;
-  --bg:           #081213;
-  --bg-card:      #0d2022;
-  --border:       rgba(217, 217, 217, 0.12);
-  --text-muted:   #abd2d6;
-  --text-dim:     #4a6b6f;
-}
-
+/* ── Keyframes ────────────────────────────────────────────────────────────── */
 @keyframes pulse-dot {
-  0%, 100% { box-shadow: 0 0 4px var(--mint); opacity: 1; }
-  50%       { box-shadow: 0 0 12px var(--mint), 0 0 24px var(--mint-glow); opacity: 0.7; }
+  0%, 100% { box-shadow: 0 0 4px #17ebbd; opacity: 1; }
+  50%       { box-shadow: 0 0 12px #17ebbd, 0 0 24px rgba(23,235,189,0.25); opacity: 0.7; }
 }
 
 @keyframes fadeInUp {
@@ -41,69 +28,17 @@ body {
   to { transform: rotate(360deg); }
 }
 
-/* ── Etherscan link hover ─────────────────────────────────────────────────── */
-.etherscan-link:hover {
-  text-decoration: underline;
-  opacity: 1 !important;
-}
-
-/* ── Explorer table row hover ─────────────────────────────────────────────── */
-.explorer-tr:hover td {
-  background: rgba(23, 235, 189, 0.04);
-}
-
 /* ── Accordion body transition ────────────────────────────────────────────── */
 .accordion-body {
   overflow: hidden;
   transition: max-height 0.35s ease;
 }
 
-/* ── Vote button hover ────────────────────────────────────────────────────── */
-.vote-btn:hover:not(:disabled) {
-  background: rgba(23, 235, 189, 0.18);
-  border-color: rgba(23, 235, 189, 0.5);
-}
-
-/* ── Connect-to-vote button hover ─────────────────────────────────────────── */
-.connect-to-vote-btn:hover {
-  background: rgba(23, 235, 189, 0.08) !important;
-  border-color: rgba(23, 235, 189, 0.3) !important;
-  color: #17ebbd !important;
-}
-
-/* ── Explorer toggle button hover ─────────────────────────────────────────── */
-.explorer-toggle-btn:hover {
-  border-color: rgba(23, 235, 189, 0.3);
-  color: #17ebbd;
-}
-
 /* ── Elegant custom scrollbars ────────────────────────────────────────────── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: rgba(8,18,19,0.6); border-radius: 3px; }
+::-webkit-scrollbar-thumb  { background: rgba(23,235,189,0.2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(23,235,189,0.45); }
+::-webkit-scrollbar-corner { background: transparent; }
 
-::-webkit-scrollbar-track {
-  background: rgba(8, 18, 19, 0.6);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: rgba(23, 235, 189, 0.2);
-  border-radius: 3px;
-  transition: background 0.2s ease;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(23, 235, 189, 0.45);
-}
-
-::-webkit-scrollbar-corner {
-  background: transparent;
-}
-
-/* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(23, 235, 189, 0.2) rgba(8, 18, 19, 0.6);
-}
+* { scrollbar-width: thin; scrollbar-color: rgba(23,235,189,0.2) rgba(8,18,19,0.6); }
