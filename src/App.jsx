@@ -125,10 +125,10 @@ const S = {
     opacity: 0, transition: 'opacity 0.2s ease',
   },
   candidateImg: {
-    width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover',
-    marginBottom: '14px', display: 'block', margin: '0 auto 14px',
+    width: '136px', height: '136px', borderRadius: '50%', objectFit: 'cover',
+    display: 'block', margin: '0 auto 18px',
     border: `2px solid rgba(23,235,189,0.2)`,
-    boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+    boxShadow: '0 4px 20px rgba(0,0,0,0.6)',
     filter: 'grayscale(20%)',
     transition: 'filter 0.2s ease, border-color 0.2s ease',
   },
@@ -148,7 +148,16 @@ const S = {
     fontFamily: "'JetBrains Mono', monospace",
   },
   voteBtnDisabled:     { opacity: 0.35, cursor: 'not-allowed' },
-  connectToVote:       { fontSize: '10px', color: C.textDim, marginTop: '8px', textAlign: 'center', letterSpacing: '0.5px', lineHeight: '1.6' },
+  connectToVote: {
+    display: 'block', width: '100%', marginTop: '12px',
+    background: 'rgba(217,217,217,0.06)', border: `0.5px solid ${C.border}`,
+    borderRadius: '4px', padding: '12px 16px',
+    color: C.textMuted, fontSize: '13px', fontWeight: '600',
+    fontFamily: "'JetBrains Mono', monospace",
+    letterSpacing: '0.5px', lineHeight: '1.5',
+    textAlign: 'center', cursor: 'pointer',
+    transition: 'all 0.2s ease',
+  },
   txBanner: {
     background: C.mintDim, border: `0.5px solid ${C.mintBorder}`, borderRadius: '6px',
     padding: '13px 20px', color: C.textMuted, fontSize: '12px', marginTop: '16px',
@@ -196,7 +205,7 @@ const S = {
     fontFamily: "'JetBrains Mono', monospace", letterSpacing: '0.5px', transition: 'all 0.2s ease',
   },
   tableWrapper:      { overflowX: 'auto', marginTop: '16px' },
-  explorerTable:     { width: '100%', borderCollapse: 'collapse', fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", minWidth: '1100px' },
+  explorerTable:     { width: '100%', borderCollapse: 'collapse', fontSize: '11px', fontFamily: "'JetBrains Mono', monospace", minWidth: '1300px', tableLayout: 'fixed' },
   explorerTh: {
     textAlign: 'left', padding: '8px 12px', color: C.textDim, fontSize: '10px',
     letterSpacing: '1px', textTransform: 'uppercase', borderBottom: `0.5px solid ${C.border}`, fontWeight: '600',
@@ -327,15 +336,19 @@ function DataRow({ label, value, link, highlight, last }) {
   )
 }
 
-function BlockModal({ data, loading, onClose, onNavigate, latestBlock }) {
+function BlockModal({ data, loading, onClose, onNavigate, minBlock, maxBlock }) {
   const [showExtra, setShowExtra] = useState(false)
   if (!data) return null
   const { event, block } = data
   const fmt    = (ts) => ts != null ? new Date(ts * 1000).toLocaleString('fr-FR') : '—'
   const fmtNum = (n)  => n  != null ? Number(n).toLocaleString('fr-FR') : '—'
-  const canPrev = block?.number != null && block.number > 1
-  const canNext = block?.number != null && latestBlock != null && block.number < latestBlock
-  const navDisabled = { opacity: 0.3, cursor: 'not-allowed', pointerEvents: 'none', filter: 'grayscale(1)' }
+  const canPrev = block?.number != null && minBlock != null && block.number > minBlock
+  const canNext = block?.number != null && maxBlock != null && block.number < maxBlock
+  const navDisabled = {
+    opacity: 0.35, cursor: 'not-allowed', pointerEvents: 'none',
+    background: 'rgba(74,107,111,0.12)', border: `0.5px solid rgba(74,107,111,0.2)`,
+    color: '#4a6b6f',
+  }
 
   return (
     <div style={S.modalOverlay} onClick={onClose}>
@@ -440,7 +453,6 @@ function App() {
   const [openAccordions, setOpenAccordions]   = useState({})
   const [modalData, setModalData]             = useState(null)
   const [modalLoading, setModalLoading]       = useState(false)
-  const [latestBlockNumber, setLatestBlockNumber] = useState(null)
   const connectRef = useRef(null)
 
   // ── Chargement initial sans MetaMask ─────────────────────────────────────────
@@ -620,9 +632,6 @@ function App() {
         gasUsedBlock: event.gasUsedBlock,
       },
     })
-    if (provider && latestBlockNumber == null) {
-      provider.getBlockNumber().then(n => setLatestBlockNumber(n)).catch(() => {})
-    }
   }
 
   const navigateModal = async (direction) => {
@@ -632,9 +641,6 @@ function App() {
     try {
       const block = await provider.getBlock(targetNum)
       const matchingEvent = explorerEvents.find(e => e.blockNumber === targetNum) || null
-      if (!latestBlockNumber) {
-        provider.getBlockNumber().then(n => setLatestBlockNumber(n)).catch(() => {})
-      }
       setModalData({
         event: matchingEvent,
         block: {
@@ -651,9 +657,11 @@ function App() {
   }
 
   // ── Derived ───────────────────────────────────────────────────────────────────
-  const totalVotes    = candidates.reduce((s, c) => s + c.votes, 0)
+  const totalVotes      = candidates.reduce((s, c) => s + c.votes, 0)
   const toggleAccordion = (i) => setOpenAccordions(prev => ({ ...prev, [i]: !prev[i] }))
-  const fmt = (ts) => ts != null ? new Date(ts * 1000).toLocaleString('fr-FR') : '—'
+  const fmt             = (ts) => ts != null ? new Date(ts * 1000).toLocaleString('fr-FR') : '—'
+  const minExplorerBlock = explorerEvents.length > 0 ? Math.min(...explorerEvents.map(e => e.blockNumber)) : null
+  const maxExplorerBlock = explorerEvents.length > 0 ? Math.max(...explorerEvents.map(e => e.blockNumber)) : null
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
@@ -783,9 +791,10 @@ function App() {
 
                   {!account ? (
                     <button
-                      style={{ ...S.connectToVote, background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline', textDecorationColor: C.textDim }}
+                      className="connect-to-vote-btn"
+                      style={S.connectToVote}
                       onClick={() => connectRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                    >🦊 Connectez-vous<br />pour voter</button>
+                    >🦊 Connectez-vous pour voter</button>
                   ) : cooldownSeconds === 0 ? (
                     <button
                       className="vote-btn"
@@ -900,11 +909,11 @@ function App() {
               <table style={S.explorerTable}>
                 <thead>
                   <tr>
-                    <th style={S.explorerTh}>Tx Hash</th>
-                    <th style={S.explorerTh}>Bloc</th>
-                    <th style={S.explorerTh}>Votant</th>
-                    <th style={S.explorerTh}>Candidat</th>
-                    <th style={S.explorerTh}>Heure</th>
+                    <th style={{ ...S.explorerTh, width: '44%' }}>Tx Hash</th>
+                    <th style={{ ...S.explorerTh, width: '8%'  }}>Bloc</th>
+                    <th style={{ ...S.explorerTh, width: '22%' }}>Votant</th>
+                    <th style={{ ...S.explorerTh, width: '12%' }}>Candidat</th>
+                    <th style={{ ...S.explorerTh, width: '14%', fontSize: '8.5px' }}>Heure</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -913,10 +922,8 @@ function App() {
                       onClick={() => openModal(e)}
                       style={{ cursor: 'pointer' }}
                     >
-                      <td style={S.explorerTd}>
-                        <span style={{ color: C.mint, fontFamily: 'monospace', fontSize: '11px', cursor: 'pointer' }}>
-                          {e.hash?.slice(0, 10)}...{e.hash?.slice(-8)}
-                        </span>
+                      <td style={{ ...S.explorerTd, fontFamily: 'monospace', fontSize: '10.5px', color: C.mint, letterSpacing: '0.2px' }}>
+                        {e.hash}
                       </td>
                       <td style={S.explorerTd}>
                         <a href={`https://sepolia.etherscan.io/block/${e.blockNumber}`}
@@ -926,9 +933,11 @@ function App() {
                           {e.blockNumber}
                         </a>
                       </td>
-                      <td style={S.explorerTd}>{e.voter}</td>
+                      <td style={{ ...S.explorerTd, fontSize: '10px' }}>
+                        {e.voter.slice(0, 10)}...{e.voter.slice(-6)}
+                      </td>
                       <td style={{ ...S.explorerTd, color: C.gold }}>{e.candidateName}</td>
-                      <td style={{ ...S.explorerTd, color: C.textDim, fontSize: '10px' }}>
+                      <td style={{ ...S.explorerTd, color: C.textDim, fontSize: '8.5px', letterSpacing: '0' }}>
                         {fmt(e.timestamp)}
                       </td>
                     </tr>
@@ -953,7 +962,8 @@ function App() {
         loading={modalLoading}
         onClose={() => { setModalData(null); setModalLoading(false) }}
         onNavigate={navigateModal}
-        latestBlock={latestBlockNumber}
+        minBlock={minExplorerBlock}
+        maxBlock={maxExplorerBlock}
       />
 
     </div>

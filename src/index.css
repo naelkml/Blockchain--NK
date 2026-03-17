@@ -64,6 +64,13 @@ body {
   border-color: rgba(23, 235, 189, 0.5);
 }
 
+/* ── Connect-to-vote button hover ─────────────────────────────────────────── */
+.connect-to-vote-btn:hover {
+  background: rgba(23, 235, 189, 0.08) !important;
+  border-color: rgba(23, 235, 189, 0.3) !important;
+  color: #17ebbd !important;
+}
+
 /* ── Explorer toggle button hover ─────────────────────────────────────────── */
 .explorer-toggle-btn:hover {
   border-color: rgba(23, 235, 189, 0.3);
