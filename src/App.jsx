@@ -233,9 +233,9 @@ function App() {
     setExplorerLoading(true)
     try {
       const ec = new Contract(CONTRACT_ADDRESS, ABI, p)
-      const raw = await ec.queryFilter(ec.filters.Voted(), -1000)
-      const last20 = raw.slice(-20).reverse()
-      const enriched = await Promise.all(last20.map(async (e) => {
+      const raw = await ec.queryFilter(ec.filters.Voted(), 0)
+      const all = raw.slice().reverse()
+      const enriched = await Promise.all(all.map(async (e) => {
         let timestamp = null, parentHash = null, gasUsed = null
         let gasLimit = null, miner = null, gasUsedBlock = null
         const idx = Number(e.args.candidateIndex)
