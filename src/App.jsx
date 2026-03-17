@@ -70,14 +70,16 @@ function DataRow({ label, value, link, highlight, last }) {
   )
 }
 
-function BlockModal({ data, loading, onClose, onNavigate, minBlock, maxBlock }) {
+function BlockModal({ data, loading, onClose, onNavigate, voteBlocks }) {
   const [showExtra, setShowExtra] = useState(false)
   if (!data) return null
   const { event, block } = data
   const fmt    = (ts) => ts != null ? new Date(ts * 1000).toLocaleString('fr-FR') : '—'
   const fmtNum = (n)  => n  != null ? Number(n).toLocaleString('fr-FR') : '—'
-  const canPrev = block?.number != null && minBlock != null && block.number > minBlock
-  const canNext = block?.number != null && maxBlock != null && block.number < maxBlock
+  const sortedBlocks = [...voteBlocks].sort((a, b) => a - b)
+  const currentIdx = block?.number != null ? sortedBlocks.indexOf(block.number) : -1
+  const canPrev = currentIdx > 0
+  const canNext = currentIdx !== -1 && currentIdx < sortedBlocks.length - 1
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -143,10 +145,10 @@ function BlockModal({ data, loading, onClose, onNavigate, minBlock, maxBlock }) 
 
         {/* Navigation */}
         <div className="modal-nav">
-          <button className="modal-nav-btn" onClick={() => canPrev && onNavigate(-1)} disabled={!canPrev}>
+          <button className="modal-nav-btn" onClick={() => canPrev && onNavigate(sortedBlocks[currentIdx - 1])} disabled={!canPrev}>
             ← Bloc précédent
           </button>
-          <button className="modal-nav-btn" onClick={() => canNext && onNavigate(+1)} disabled={!canNext}>
+          <button className="modal-nav-btn" onClick={() => canNext && onNavigate(sortedBlocks[currentIdx + 1])} disabled={!canNext}>
             Bloc suivant →
           </button>
         </div>
@@ -348,9 +350,7 @@ function App() {
     })
   }
 
-  const navigateModal = async (direction) => {
-    if (modalData?.block?.number == null) return
-    const targetNum = modalData.block.number + direction
+  const navigateModal = async (targetNum) => {
     setModalLoading(true)
     try {
       const block = await provider.getBlock(targetNum)
@@ -374,8 +374,7 @@ function App() {
   const totalVotes       = candidates.reduce((s, c) => s + c.votes, 0)
   const toggleAccordion  = (i) => setOpenAccordions(prev => ({ ...prev, [i]: !prev[i] }))
   const fmt              = (ts) => ts != null ? new Date(ts * 1000).toLocaleString('fr-FR') : '—'
-  const minExplorerBlock = explorerEvents.length > 0 ? Math.min(...explorerEvents.map(e => e.blockNumber)) : null
-  const maxExplorerBlock = explorerEvents.length > 0 ? Math.max(...explorerEvents.map(e => e.blockNumber)) : null
+  const voteBlocks = explorerEvents.map(e => e.blockNumber)
 
   // ─────────────────────────────────────────────────────────────────────────────
   return (
@@ -605,14 +604,7 @@ function App() {
                   {explorerEvents.map((e, i) => (
                     <tr key={i} className="explorer-tr" onClick={() => openModal(e)} style={{ cursor: 'pointer' }}>
                       <td className="explorer-td td-hash">{e.hash}</td>
-                      <td className="explorer-td">
-                        <a href={`https://sepolia.etherscan.io/block/${e.blockNumber}`}
-                          target="_blank" rel="noopener noreferrer"
-                          onClick={ev => ev.stopPropagation()}
-                          style={{ color: 'var(--text-muted)', textDecoration: 'none' }}>
-                          {e.blockNumber}
-                        </a>
-                      </td>
+                      <td className="explorer-td">{e.blockNumber}</td>
                       <td className="explorer-td td-voter">
                         {e.voter.slice(0, 10)}...{e.voter.slice(-6)}
                       </td>
@@ -639,8 +631,7 @@ function App() {
         loading={modalLoading}
         onClose={() => { setModalData(null); setModalLoading(false) }}
         onNavigate={navigateModal}
-        minBlock={minExplorerBlock}
-        maxBlock={maxExplorerBlock}
+        voteBlocks={voteBlocks}
       />
 
     </div>
