@@ -386,6 +386,9 @@ function App() {
   const [openAccordions, setOpenAccordions]   = useState({})
   const [modalData, setModalData]             = useState(null)
   const [modalLoading, setModalLoading]       = useState(false)
+  const [selectedTx, setSelectedTx]           = useState(null)
+  const [blockDetails, setBlockDetails]       = useState(null)
+  const [loadingBlock, setLoadingBlock]       = useState(false)
 
   // ── Chargement initial sans MetaMask ─────────────────────────────────────────
   useEffect(() => {
@@ -543,6 +546,20 @@ function App() {
     }, 1000)
     return () => clearInterval(timer)
   }, [cooldownSeconds])
+
+  // ── Tx detail modal ───────────────────────────────────────────────────────────
+  const openTxModal = async (event) => {
+    setSelectedTx(event)
+    setLoadingBlock(true)
+    try {
+      const block = await provider.getBlock(event.blockNumber)
+      setBlockDetails(block)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoadingBlock(false)
+    }
+  }
 
   // ── Modal helpers ─────────────────────────────────────────────────────────────
   const openModal = (event) => {
@@ -824,12 +841,12 @@ function App() {
                       style={{ cursor: 'pointer' }}
                     >
                       <td style={S.explorerTd}>
-                        <a href={`https://sepolia.etherscan.io/tx/${e.hash}`}
-                          target="_blank" rel="noopener noreferrer"
-                          onClick={ev => ev.stopPropagation()}
-                          style={{ color: C.mint, textDecoration: 'none' }}>
+                        <span
+                          onClick={ev => { ev.stopPropagation(); openTxModal(e) }}
+                          style={{ color: '#14b8a6', fontFamily: 'monospace', fontSize: '13px', cursor: 'pointer', textDecoration: 'underline' }}
+                        >
                           {e.hash}
-                        </a>
+                        </span>
                       </td>
                       <td style={S.explorerTd}>
                         <a href={`https://sepolia.etherscan.io/block/${e.blockNumber}`}
@@ -859,6 +876,100 @@ function App() {
         &nbsp;·&nbsp;
         <span style={{ color: C.mint }}>{CONTRACT_ADDRESS}</span>
       </footer>
+
+      {/* ── Modale détail transaction ── */}
+      {selectedTx && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(0,0,0,0.85)', zIndex: 1000,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+        }}>
+          <div style={{
+            background: '#0a1a1c', border: '1px solid rgba(20,184,166,0.3)',
+            borderRadius: '16px', padding: '32px', width: '100%',
+            maxWidth: '700px', maxHeight: '85vh', overflowY: 'auto', position: 'relative',
+          }}>
+            <button
+              onClick={() => { setSelectedTx(null); setBlockDetails(null) }}
+              style={{
+                position: 'absolute', top: '16px', right: '16px',
+                background: 'transparent', border: '1px solid rgba(20,184,166,0.3)',
+                color: '#14b8a6', borderRadius: '8px', padding: '6px 12px',
+                cursor: 'pointer', fontSize: '14px',
+              }}
+            >✕ Fermer</button>
+
+            <div style={{ color: '#4b6b6e', fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' }}>
+              Transaction on-chain
+            </div>
+            <div style={{ color: '#f0fdfc', fontSize: '20px', fontWeight: '800', marginBottom: '24px' }}>
+              Bloc #{selectedTx.blockNumber}
+            </div>
+
+            {[
+              { label: 'Transaction Hash', value: selectedTx.hash },
+              { label: 'Votant',           value: selectedTx.voter },
+              { label: 'Candidat voté',    value: selectedTx.candidateName },
+              { label: 'Numéro de bloc',   value: `#${selectedTx.blockNumber}` },
+              { label: 'Heure',            value: selectedTx.timestamp ? new Date(selectedTx.timestamp * 1000).toLocaleString('fr-FR') : '—' },
+            ].map(({ label, value }) => (
+              <div key={label} style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid rgba(20,184,166,0.08)' }}>
+                <div style={{ color: '#4b6b6e', fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '6px' }}>{label}</div>
+                <div style={{ color: '#f0fdfc', fontFamily: 'monospace', fontSize: '14px', wordBreak: 'break-all' }}>{value}</div>
+              </div>
+            ))}
+
+            {loadingBlock && (
+              <div style={{ color: '#4b6b6e', textAlign: 'center', padding: '20px' }}>
+                Chargement des données du bloc...
+              </div>
+            )}
+
+            {blockDetails && (
+              <>
+                {[
+                  { label: 'parentHash', value: blockDetails.parentHash },
+                  { label: 'gasUsed',    value: `${blockDetails.gasUsed?.toString()} unités` },
+                  { label: 'gasLimit',   value: `${blockDetails.gasLimit?.toString()} unités` },
+                  { label: 'Validateur', value: blockDetails.miner },
+                ].map(({ label, value }) => (
+                  <div key={label} style={{ marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid rgba(20,184,166,0.08)' }}>
+                    <div style={{ color: '#4b6b6e', fontSize: '11px', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '6px' }}>{label}</div>
+                    <div style={{ color: '#f0fdfc', fontFamily: 'monospace', fontSize: '13px', wordBreak: 'break-all' }}>{value}</div>
+                  </div>
+                ))}
+
+                <div style={{ background: 'rgba(20,184,166,0.04)', borderLeft: '3px solid rgba(20,184,166,0.4)', borderRadius: '4px', padding: '12px 16px', marginTop: '8px', marginBottom: '24px' }}>
+                  <div style={{ color: '#5eead4', fontSize: '12px', fontStyle: 'italic', lineHeight: '1.6' }}>
+                    🔐 Le <strong>parentHash</strong> est le hash cryptographique du bloc précédent. C'est ce lien qui rend la blockchain immuable : modifier ce bloc changerait son hash, invalidant le parentHash du bloc suivant, cassant toute la chaîne (section 2.3 du cours).
+                    <br /><br />
+                    ⛽ <strong>gasUsed</strong> représente le coût computationnel de l'exécution de <code>vote()</code> sur l'EVM. Chaque opération Solidity a un prix en gas (section 3.3 du cours).
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
+                  <button
+                    onClick={async () => { const b = await provider.getBlock(blockDetails.number - 1); setBlockDetails(b) }}
+                    style={{ flex: 1, background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.25)', color: '#14b8a6', borderRadius: '8px', padding: '10px', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}
+                  >← Bloc précédent #{blockDetails.number - 1}</button>
+                  <button
+                    onClick={async () => { const b = await provider.getBlock(blockDetails.number + 1); setBlockDetails(b) }}
+                    style={{ flex: 1, background: 'rgba(20,184,166,0.08)', border: '1px solid rgba(20,184,166,0.25)', color: '#14b8a6', borderRadius: '8px', padding: '10px', cursor: 'pointer', fontSize: '14px', fontWeight: '600' }}
+                  >Bloc suivant #{blockDetails.number + 1} →</button>
+                </div>
+
+                <div style={{ textAlign: 'center' }}>
+                  <a
+                    href={`https://sepolia.etherscan.io/tx/${selectedTx.hash}`}
+                    target="_blank" rel="noopener noreferrer"
+                    style={{ color: '#14b8a6', fontSize: '13px', textDecoration: 'none', borderBottom: '1px solid rgba(20,184,166,0.3)', paddingBottom: '2px' }}
+                  >🔍 Vérifier cette transaction sur Etherscan →</a>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* ── Modal bloc ── */}
       <BlockModal
