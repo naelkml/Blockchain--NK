@@ -72,6 +72,7 @@ function DataRow({ label, value, link, highlight, last }) {
 
 function BlockModal({ data, loading, onClose, onNavigate, voteBlocks }) {
   const [showExtra, setShowExtra] = useState(false)
+  const [slideDir, setSlideDir] = useState(null)
   if (!data) return null
   const { event, block } = data
   const fmt    = (ts) => ts != null ? new Date(ts * 1000).toLocaleString('fr-FR') : '—'
@@ -80,6 +81,11 @@ function BlockModal({ data, loading, onClose, onNavigate, voteBlocks }) {
   const currentIdx = block?.number != null ? sortedBlocks.indexOf(block.number) : -1
   const canPrev = currentIdx > 0
   const canNext = currentIdx !== -1 && currentIdx < sortedBlocks.length - 1
+
+  const handleNavigate = (targetBlock, dir) => {
+    setSlideDir(dir)
+    onNavigate(targetBlock)
+  }
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -106,6 +112,7 @@ function BlockModal({ data, loading, onClose, onNavigate, voteBlocks }) {
           </div>
         ) : (
           <div className="modal-body">
+          <div key={block?.number} className={slideDir ? `block-content--slide-${slideDir}` : ''}>
             {event ? (
               <>
                 <DataRow label="Transaction Hash"
@@ -141,14 +148,15 @@ function BlockModal({ data, loading, onClose, onNavigate, voteBlocks }) {
               🔐 Le parentHash est le hash du bloc précédent. C'est ce lien cryptographique qui rend la blockchain immuable : modifier ce bloc changerait son hash, invalidant le parentHash du bloc suivant, cassant toute la chaîne jusqu'au bout.
             </div>
           </div>
+          </div>
         )}
 
         {/* Navigation */}
         <div className="modal-nav">
-          <button className="modal-nav-btn" onClick={() => canPrev && onNavigate(sortedBlocks[currentIdx - 1])} disabled={!canPrev}>
+          <button className="modal-nav-btn" onClick={() => canPrev && handleNavigate(sortedBlocks[currentIdx - 1], 'left')} disabled={!canPrev}>
             ← Bloc précédent
           </button>
-          <button className="modal-nav-btn" onClick={() => canNext && onNavigate(sortedBlocks[currentIdx + 1])} disabled={!canNext}>
+          <button className="modal-nav-btn" onClick={() => canNext && handleNavigate(sortedBlocks[currentIdx + 1], 'right')} disabled={!canNext}>
             Bloc suivant →
           </button>
         </div>

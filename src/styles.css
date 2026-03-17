@@ -680,6 +680,26 @@
 }
 
 /* ─── Modal ──────────────────────────────────────────────────────────────── */
+@keyframes overlayFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes boxSlideUp {
+  from { opacity: 0; transform: translateY(32px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+
+@keyframes slideInFromLeft {
+  from { opacity: 0; transform: translateX(-28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideInFromRight {
+  from { opacity: 0; transform: translateX(28px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
 .modal-overlay {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
@@ -689,6 +709,7 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
+  animation: overlayFadeIn 0.2s ease;
 }
 
 .modal-box {
@@ -701,6 +722,14 @@
   display: flex;
   flex-direction: column;
   box-shadow: 0 0 80px rgba(23, 235, 189, 0.08);
+  animation: boxSlideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.block-content--slide-left {
+  animation: slideInFromLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.block-content--slide-right {
+  animation: slideInFromRight 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .modal-header {
